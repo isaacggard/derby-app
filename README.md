@@ -1,6 +1,6 @@
 # 2025 MLB Home Run Derby Forecast
 
-A Streamlit dashboard that showcases my model's predictions of the 2025 MLB Home Run Derby. It uses an XGBoost Poisson regression model and Bootstrap Monte Carlo simulations. The model estimates each player's expected home runs per round, then simulates 10,000 tournaments to produce win probabilities and advancement odds.
+A Streamlit dashboard that showcases my model’s predictions for the 2025 MLB Home Run Derby. The model uses XGBoost Poisson regression to estimate each player’s expected home runs per round. To generate tournament probabilities, the model is refit on bootstrap samples of the training data and then used to run 10,000 Monte Carlo tournament simulations, producing advancement and win probabilities for every player.
 
 ---
 
@@ -48,3 +48,4 @@ The final probabilities are averages across all 10,000 simulations.
 ## Author
 
 **Isaac Gard**
+
