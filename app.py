@@ -476,7 +476,7 @@ def render_overall(data: dict):
     st.markdown("")
 
     # ---- Ranking table ----
-    section_header("Player Rankings by Win Probability")
+    section_header("Advancement Probability by Player")
 
     rank_df = preds_sorted.copy()
     rank_df.index = range(1, len(rank_df) + 1)
@@ -530,7 +530,7 @@ def render_overall(data: dict):
         section_header("Predicted vs. Actual Results")
 
         comp = preds_sorted[["Player", "WinProb"]].copy()
-        comp["Pred Rank"] = range(1, len(comp) + 1)
+        comp["Predicted Rank"] = range(1, len(comp) + 1)
 
         for rnd in [1, 2, 3]:
             rnd_lam = lambdas[lambdas["Round"] == rnd][["Player", "lambda_HRs"]].copy()
@@ -571,7 +571,7 @@ def render_overall(data: dict):
 
         comp_display = comp_display.rename(columns={"WinProb": "Win %"})
 
-        display_cols = ["Player", "Pred Rank", "Win %",
+        display_cols = ["Predicted Rank", "Player", "Win %",
                         "R1 Expected HRs", "R1 Actual", "R2 Expected HRs", "R2 Actual", "R3 Expected HRs", "R3 Actual"]
         display_cols = [c for c in display_cols if c in comp_display.columns]
 
@@ -604,33 +604,55 @@ def render_overall(data: dict):
 
     # ---- Interpretation ----
     section_header("Interpretation")
-    st.markdown(insight_card(
-        "<strong>Key Takeaways:</strong> "
-        "The XGBoost Poisson model identifies each player's expected HR rate (λ) per round, "
-        "then runs 10,000 bootstrap × MC tournament simulations. Players with higher volatility "
-        "(HR σ) have wider outcome distributions, meaning their results are harder to predict "
-        "and more dependent on in-game randomness."
-    ), unsafe_allow_html=True)
+    st.markdown(
+        insight_card("""
+    <strong>Model Insights</strong>
+    <ol style="margin-top:10px; padding-left:20px;">
+        <li style="margin-bottom:14px;">
+            <strong>Cruz vs Raleigh: Favorite vs Champion</strong><br>
+            Oneil Cruz entered as the model’s statistical favorite (27.4% win probability), while Cal Raleigh ranked second (18.8%) and ultimately won the derby. Raleigh projected slightly higher in expected HR totals per round, but Cruz advanced from Round 1 more frequently in simulations. Because the derby is a three-round elimination tournament, that higher advancement rate translated into the most simulated wins overall.
+        </li>
+        <li style="margin-bottom:14px;">
+            <strong>High Tournament Volatility</strong><br>
+            The derby is highly volatile. Even the top projected player won only ~27% of the 10,000 simulations, meaning the outcome of any single tournament is heavily influenced by round-to-round variance.
+        </li>
+        <li style="margin-bottom:14px;">
+            <strong>Core Hitting Skill Drives Performance</strong><br>
+            Underlying hitting quality drove most of the model’s predictions. Metrics like Zone%, wOBA, max exit velocity, and ISO ranked among the most important features, suggesting the model leaned heavily on a player’s ability to consistently generate hard contact.
+        </li>
+        <li>
+            <strong>Derby Format Influences Outcomes</strong><br>
+            Variables tied to the derby rules — including round length and the bonus-time HR distance threshold — were among the model’s more important predictors. The bonus-time threshold is the distance a home run must travel to earn additional time in a round. These features capture how format changes across seasons affect the number of pitches hitters see and the overall scoring environment.
+    </ol>
+    """),
+    unsafe_allow_html=True
+)
 
     # ---- Methodology ----
-    with st.expander("📐  Methodology"):
+    with st.expander("📐 How It Works"):
         st.markdown("""
+        **Custom Historical Dataset**
+
+        The model is trained on a custom dataset of MLB Home Run Derby performances dating back to 2015. The dataset was manually assembled and curated from multiple sources, combining derby results, player statistics, and event-specific features into a structured modeling dataset.
+
         **XGBoost Poisson Regression**
-        
-        Each player's expected HR rate (λ) per round is estimated using an XGBoost model
-        with `count:poisson` objective, trained on historical HR Derby data. The model uses
-        all available numeric features (batting stats, combine data, etc.) and handles feature
-        selection internally via tree splits.
-        
+
+        Each player's expected home runs per round (λ) are estimated using an XGBoost model with a Poisson objective. The model learns the relationship between player characteristics and derby performance to predict scoring outcomes for each round of the competition.
+
         **Bootstrap + Monte Carlo Simulation**
-        
-        To capture both *model uncertainty* and *game randomness*:
-        1. **100 bootstrap resamples** of the training data → 100 fitted XGBoost models
-        2. Each model predicts 2025 lambdas for every player/round
-        3. **100 MC tournament sims** per bootstrap (10,000 total) using Poisson draws
-        
-        The resulting probabilities (Top 4, Final, Win) are averages across all simulations.
-        The ± SD values show how stable each probability is across bootstrap resamples.
+
+        To capture both model uncertainty and the randomness of the derby format:
+
+        1. Bootstrap the training data
+            * 100 resampled versions of the historical dataset are generated. An XGBoost Poisson model is trained on each sample, producing 100 slightly different fitted models.
+
+        2. Generate round-level expectations
+            * Each model predicts the expected number of home runs (λ) for every player and round in the 2025 derby field.
+
+        3. Simulate the tournament bracket
+            * For each fitted model, 100 tournaments are simulated by drawing home run totals from a Poisson distribution and advancing players through the derby bracket.
+
+        This produces 10,000 simulated tournaments in total. Advancement and win probabilities are calculated from the aggregate results across all simulations.
         """)
 
 
@@ -683,7 +705,7 @@ def render_player(player: str, data: dict):
     st.markdown("")
 
     # ---- Expected HR cards with bootstrap CI ----
-    section_header("Expected HRs (Predicted λ) by Round")
+    section_header("Expected HRs by Round")
 
     # Row 1: Predicted lambda with bootstrap CI
     cols = st.columns(3)
