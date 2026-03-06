@@ -39,13 +39,13 @@ Each player's expected home runs per round (λ) are estimated using an XGBoost m
 To capture both model uncertainty and the randomness of the derby format:
 
 1. Bootstrap the training data
-* 100 resampled versions of the historical dataset are generated. An XGBoost Poisson model is trained on each sample, producing 100 slightly different fitted models.
+    * 100 resampled versions of the historical dataset are generated. An XGBoost Poisson model is trained on each sample, producing 100 slightly different fitted models.
 
 2. Generate round-level expectations
-* Each model predicts the expected number of home runs (λ) for every player and round in the 2025 derby field.
+    * Each model predicts the expected number of home runs (λ) for every player and round in the 2025 derby field.
 
 3. Simulate the tournament bracket
-* For each fitted model, 100 tournaments are simulated by drawing home run totals from a Poisson distribution and advancing players through the derby bracket.
+    * For each fitted model, 100 tournaments are simulated by drawing home run totals from a Poisson distribution and advancing players through the derby bracket.
 
 This produces 10,000 simulated tournaments in total. Advancement and win probabilities are calculated from the aggregate results across all simulations.
 
@@ -62,5 +62,6 @@ This produces 10,000 simulated tournaments in total. Advancement and win probabi
 ## Author
 
 **Isaac Gard**
+
 
 
